@@ -1,0 +1,61 @@
+BoxOffice API - README
+
+Overview:
+This API allows the Box Office Team to interact with the system and retrieve data related to event schedules, seating availability, ticket prices, and show details. The interface BoxOfficeOperations.java defines the required methods, and the supporting classes (Event, Seat, Show, etc.) store structured data.
+
+Files Included:
+BoxOfficeOperations.java - Interface defining all required methods
+Event.java - Stores event details
+Seat.java - Stores seat details
+EventSchedule.java - Stores event schedules
+Show.java - Stores show details
+ShowTime.java - Stores show times
+BoxOfficeSystem.java - Sample implementation (optional)
+README.md - This document
+
+
+How to Use the Interface:
+Implement BoxOfficeOperations.java in your system.
+Use the provided data classes (Event.java, Seat.java, etc.).
+Refer to BoxOfficeSystem.java for an example implementation.
+
+
+Interface Methods -
+
+Ticket Sales & Pricing:
+getUpdatedTicketPrice(int eventID) - Retrieves the latest ticket price for an event.
+
+Event & Show Management:
+getEventSchedule() - Retrieves a list of all scheduled events.
+searchEventScheduleByDate(String date) - Searches for events on a specific date.
+searchEventScheduleByType(String eventType, int eventID) - Searches for events of a specific type.
+notifyEventChanges(int eventID) - Notifies about event updates.
+
+Seating & Venue Management:
+getSeatingAvailability(int eventID) - Retrieves available seats, including restricted and wheelchair-accessible seats.
+getVenueCapacity(int hallID) - Retrieves the venue's seating capacity.
+
+Show Information:
+getListOfAllShows() - Retrieves all scheduled shows.
+getShowTimeList() - Retrieves show times.
+getShowStartTime(int eventID) - Retrieves a show's start time.
+getShowDuration(int eventID) - Retrieves a show's duration in minutes.
+
+
+Supporting Data Classes:
+Event.java - Represents an event with ID, name, date, and type.
+Seat.java - Represents seat details, including accessibility and restricted view.
+EventSchedule.java - Stores event scheduling details, including date and venue.
+Show.java - Stores show details, including name, start time, and duration.
+ShowTime.java - Represents the start time of a show.
+
+Contact Information:
+Operations Team Lead: Ranveer Hothi
+Email: Ranveer.Hothi@city.ac.uk
+
+Final Instructions
+Implement BoxOfficeOperations.java.
+Use the supporting classes.
+Refer to BoxOfficeSystem.java for examples.
+Test the API methods before full integration.
+If you have any questions, contact the Operations Team.
