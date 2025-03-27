@@ -59,6 +59,7 @@ public class TimelinePanel extends JPanel {
             dayPanel.getCalendar().getLayeredPane().remove(this);
             dayPanel.getCalendar().getLayeredPane().repaint();
             dayPanel.getCalendar().getCalendarPanel().unpause();
+            dayPanel.resetColor();
         });
         topHeader.add(exitButton, BorderLayout.WEST);
 

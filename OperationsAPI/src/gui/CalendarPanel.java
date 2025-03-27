@@ -130,6 +130,7 @@ public class CalendarPanel extends JPanel {
 
         private final TimelinePanel timelinePanel;
         private boolean[] roomAvailability;
+        private JPanel availablePanel;
 
         final int day;
         final int month;
@@ -147,7 +148,7 @@ public class CalendarPanel extends JPanel {
             setLayout(new BorderLayout());
             setBorder(BorderFactory.createLineBorder(Color.WHITE));
 
-            JPanel availablePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            availablePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
             limit = LocalDate.now().plusDays(28);
             date = LocalDate.of(currentYear, month, day);
@@ -212,6 +213,10 @@ public class CalendarPanel extends JPanel {
             colorBox.setBorder(BorderFactory.createLineBorder(Color.black));
             colorBox.setPreferredSize(new Dimension(15, 15));
             return colorBox;
+        }
+        public void resetColor() {
+            availablePanel.setBackground(color);
+            setBackground(color);
         }
         public int getDay() {
             return day;
