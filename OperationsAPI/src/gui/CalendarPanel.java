@@ -182,6 +182,7 @@ public class CalendarPanel extends JPanel {
                     if(!isPaused) {
                         if (valid) {
                             calendar.getLayeredPane().add(timelinePanel, Integer.valueOf(2));
+                            pause();
                         } else {
                             JOptionPane.showMessageDialog(null, "No timeline for this day");
                         }

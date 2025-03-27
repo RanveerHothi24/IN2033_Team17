@@ -245,4 +245,7 @@ public class MusicHallCalendar {
     public JLayeredPane getLayeredPane() {
         return layeredPane;
     }
+    public CalendarPanel getCalendarPanel() {
+        return calendarPanel;
+    }
 }

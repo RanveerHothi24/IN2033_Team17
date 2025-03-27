@@ -37,7 +37,7 @@ public class TimelinePanel extends JPanel {
             }
         }
 
-        setBounds(0,60,1080,620);
+        setBounds(0,0,1080,680);
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         // TOP PANEL (VIEWER)
@@ -58,6 +58,7 @@ public class TimelinePanel extends JPanel {
         exitButton.addActionListener(e -> {
             dayPanel.getCalendar().getLayeredPane().remove(this);
             dayPanel.getCalendar().getLayeredPane().repaint();
+            dayPanel.getCalendar().getCalendarPanel().unpause();
         });
         topHeader.add(exitButton, BorderLayout.WEST);
 

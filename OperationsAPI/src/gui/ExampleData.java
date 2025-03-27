@@ -20,7 +20,7 @@ public class ExampleData {
 
     private static final LocalDate[] startDates = new LocalDate[28];
     private static final LocalTime[] startTimes = new LocalTime[13];
-    private static final LocalDateTime[] startDatetimes = new LocalDateTime[15];
+    private static final LocalDateTime[] startDateTimes = new LocalDateTime[15];
 
     static {
         for (int i = 0; i < startDates.length; i++) {
@@ -29,22 +29,22 @@ public class ExampleData {
         for (int i = 0; i < startTimes.length; i++) {
             startTimes[i] = LocalTime.of(10,0).plusHours(i);
         }
-        for (int i = 0; i < startDatetimes.length; i++) {
-            startDatetimes[i] = LocalDateTime.of(startDates[r.nextInt(28)], startTimes[r.nextInt(13)]);
+        for (int i = 0; i < startDateTimes.length; i++) {
+            startDateTimes[i] = LocalDateTime.of(startDates[r.nextInt(28)], startTimes[r.nextInt(13)]);
         }
     }
 
     private final static Duration[] durations = {Duration.ofMinutes(60),Duration.ofMinutes(120)};
     public final static int[] roomIds = {1,2,3,4,5,6,7,8};
 
-    public static Event[] events = new Event[60];
+    public static Event[] events = new Event[120];
     static {
         for (int i = 0; i < events.length; i++) {
             events[i] = new Event(
                     eventIds[r.nextInt(eventIds.length)],
                     eventNames[r.nextInt(eventNames.length)],
                     eventTypes[r.nextInt(eventTypes.length)],
-                    startDatetimes[r.nextInt(startDatetimes.length)],
+                    startDateTimes[r.nextInt(startDateTimes.length)],
                     durations[r.nextInt(durations.length)],
                     roomIds[r.nextInt(roomIds.length)]);
         }
