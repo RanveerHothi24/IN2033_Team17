@@ -5,7 +5,7 @@ import java.awt.*;
 
 public class ContractsPanel extends JPanel {
 
-    private boolean inFrame = false;
+    private boolean isOpen = false;
 
     public ContractsPanel() {
 
@@ -19,10 +19,10 @@ public class ContractsPanel extends JPanel {
         this.add(title, BorderLayout.NORTH);
 
     }
-    public boolean isInFrame() {
-        return inFrame;
+    public boolean isOpen() {
+        return isOpen;
     }
-    public void setInFrame(boolean inFrame) {
-        this.inFrame = inFrame;
+    public void setOpen(boolean open) {
+        this.isOpen = open;
     }
 }

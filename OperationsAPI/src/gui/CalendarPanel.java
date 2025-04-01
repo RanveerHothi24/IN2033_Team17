@@ -14,7 +14,6 @@ public class CalendarPanel extends JPanel {
 
     private final MusicHallCalendar calendar;
     private LocalDate today;
-    private LocalDate limit;
     private final CardLayout cardLayout;
     private int currentMonth;
     private int currentYear;
@@ -34,7 +33,7 @@ public class CalendarPanel extends JPanel {
         currentMonth = today.getMonthValue();
         currentYear = today.getYear();
 
-        for (int i = -1; i <= 1; i++){
+        for (int i = 0; i <= 48; i++){
             int month = currentMonth + i;
             int year = currentYear;
 
@@ -59,19 +58,22 @@ public class CalendarPanel extends JPanel {
         JLabel monthLabel = new JLabel(title);
         monthLabel.setHorizontalAlignment(SwingConstants.CENTER);
         monthLabel.setFont(new Font("Arial", Font.BOLD, 15));
+        monthLabel.setForeground(Color.WHITE);
 
         JPanel dayInfoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
+        dayInfoPanel.setBackground(new Color(70,70,70));
         String[] dayNames = {"Sun","Sat","Fri","Thu","Wed","Tue","Mon"};
         for (int i = 0; i < dayNames.length; i++) {
             JLabel dayInfo = new JLabel(dayNames[i]);
             dayInfo.setHorizontalAlignment(SwingConstants.CENTER);
-            dayInfo.setPreferredSize(new Dimension(1080/7, 20));
-            dayInfo.setBackground(Color.WHITE);
-            dayInfo.setBorder(BorderFactory.createLineBorder(Color.black));
+            dayInfo.setPreferredSize(new Dimension((MusicHallCalendar.width*4/5)/7, 20));
+            dayInfo.setBorder(BorderFactory.createLineBorder(MusicHallCalendar.backgroundColor,4));
+            dayInfo.setForeground(Color.WHITE);
             dayInfoPanel.add(dayInfo, FlowLayout.LEFT);
         }
         headerPanel.add(monthLabel, BorderLayout.NORTH);
         headerPanel.add(dayInfoPanel, BorderLayout.SOUTH);
+        headerPanel.setBackground(MusicHallCalendar.backgroundColor);
 
         monthPanel.add(headerPanel, BorderLayout.NORTH);
 
@@ -85,7 +87,9 @@ public class CalendarPanel extends JPanel {
 
         for (int i = 1; i <= totalCells; i++) {
             if (i < firstDayOfWeek || day > daysInMonth) {
-                daysPanel.add(new JLabel(""));
+                JPanel emptyPanel = new JPanel();
+                emptyPanel.setBackground(MusicHallCalendar.backgroundColor);
+                daysPanel.add(emptyPanel);
             } else {
                 daysPanel.add(new DayPanel(day, month));
                 day++;
@@ -99,10 +103,11 @@ public class CalendarPanel extends JPanel {
         previousButton.addActionListener(e -> switchMonth(-1));
 
         JPanel controlPanel = new JPanel();
+        controlPanel.setBackground(MusicHallCalendar.backgroundColor);
 
-        if (month == currentMonth-1 || (month == 12 && currentMonth == 1)) {
+        if (month == currentMonth) {
             controlPanel.add(nextButton, BorderLayout.SOUTH);
-        } else if (month == currentMonth + 1 || (month == 1 && currentMonth == 12)) {
+        } else if (month == currentMonth + 6 || (month == 5 && currentMonth == 12)) {
             controlPanel.add(previousButton, BorderLayout.SOUTH);
         } else {
             controlPanel.add(previousButton, BorderLayout.SOUTH);
@@ -134,8 +139,6 @@ public class CalendarPanel extends JPanel {
 
         final int day;
         final int month;
-        final LocalDate date;
-        final boolean valid;
         final Color color;
 
         public DayPanel(int day, int month) {
@@ -146,47 +149,35 @@ public class CalendarPanel extends JPanel {
             timelinePanel = new TimelinePanel(this);
             roomAvailability = timelinePanel.getRoomAvailability();
             setLayout(new BorderLayout());
-            setBorder(BorderFactory.createLineBorder(Color.WHITE));
+            setBorder(BorderFactory.createLineBorder(MusicHallCalendar.backgroundColor,4));
 
             availablePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-            limit = LocalDate.now().plusDays(28);
-            date = LocalDate.of(currentYear, month, day);
-            if (date.isBefore(LocalDate.now()) || date.isAfter(limit)) {
-                valid = false;
-                color = Color.GRAY;
-            } else {
-                valid = true;
-                color = Color.LIGHT_GRAY;
+            color = new Color(70,70,70);
 
-                if (!roomAvailability[0] && !roomAvailability[1] && !roomAvailability[2]) availablePanel.add(createColorBox(Color.GREEN));
-                else {
-                    if (roomAvailability[0]) availablePanel.add(createColorBox(Color.CYAN));
-                    if (roomAvailability[1]) availablePanel.add(createColorBox(Color.YELLOW));
-                    if (roomAvailability[2]) availablePanel.add(createColorBox(Color.MAGENTA));
-                }
-
-                availablePanel.setBackground(color);
-                add(availablePanel, BorderLayout.NORTH);
+            /*if (!roomAvailability[0] && !roomAvailability[1] && !roomAvailability[2]) availablePanel.add(createColorBox(Color.GREEN));
+            else {
+                if (roomAvailability[0]) availablePanel.add(createColorBox(Color.CYAN));
+                if (roomAvailability[1]) availablePanel.add(createColorBox(Color.YELLOW));
+                if (roomAvailability[2]) availablePanel.add(createColorBox(Color.MAGENTA));
             }
+
+            availablePanel.setBackground(color);
+            add(availablePanel, BorderLayout.NORTH);*/
 
             setBackground(color);
 
             JLabel dayLabel = new JLabel(day + " / " + month);
             dayLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            dayLabel.setForeground(Color.BLACK);
+            dayLabel.setForeground(Color.WHITE);
             add(dayLabel, BorderLayout.CENTER);
 
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     if(!isPaused) {
-                        if (valid) {
-                            calendar.getLayeredPane().add(timelinePanel, Integer.valueOf(2));
-                            pause();
-                        } else {
-                            JOptionPane.showMessageDialog(null, "No timeline for this day");
-                        }
+                        calendar.getLayeredPane().add(timelinePanel, Integer.valueOf(2));
+                        pause();
                     }
                 }
 
@@ -217,6 +208,9 @@ public class CalendarPanel extends JPanel {
         public void resetColor() {
             availablePanel.setBackground(color);
             setBackground(color);
+        }
+        public void highlight(String filter, Color color) {
+            // if day belongs to contract, highlight it with colour
         }
         public int getDay() {
             return day;

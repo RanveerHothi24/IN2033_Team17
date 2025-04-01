@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 public class ExampleData {
@@ -15,7 +16,7 @@ public class ExampleData {
 
     // EVENT DATA
     private final static int[] eventIds = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
-    private static final String[] eventNames = {"An Event","Some Event","Another Event","idk","Event Name"};
+    public static final String[] eventNames = {"An Event","Some Event","Another Event","idk","Event Name"};
     private static final String[] eventTypes = {"Show","Film","Meeting"};
 
     private static final LocalDate[] startDates = new LocalDate[28];
@@ -33,6 +34,55 @@ public class ExampleData {
             startDateTimes[i] = LocalDateTime.of(startDates[r.nextInt(28)], startTimes[r.nextInt(13)]);
         }
     }
+
+    public static String[] companyNames = {"Roberts-Bull Productions","Robinson and Sons Productions","Gordon and Sons Productions,Howard Ltd Productions"
+    ,"Mason, Wright and Green Productions"
+    ,"Houghton-Wright Productions"
+    ,"Taylor-Faulkner Productions"
+    ,"Norton Group Productions"
+    ,"Payne-Lowe Productions"
+    ,"Hughes Ltd Productions"
+    ,"Graham-Smith Productions"
+    ,"Smith Inc Productions"
+    ,"Rose-Archer Productions"
+    ,"Slater-Marshall Productions"
+    ,"Palmer-Pearson Productions"
+    ,"Humphries, Heath and Thompson Productions"
+    ,"Howe-Harris Productions"
+    ,"Bennett, Hughes and John Productions"
+    ,"Clarke Inc Productions"
+    ,"Turner-Stevens Productions"
+    ,"Ward Inc Productions"
+    ,"Bibi Inc Productions"
+    ,"Mitchell-Webb Productions"
+    ,"Turner, Young and Allan Productions"
+    ,"Booth LLC Productions"
+    ,"Bryan Group Productions"
+    ,"Johnson Inc Productions"
+    ,"Johnson, Fletcher and Page Productions"
+    ,"Smith, Barnett and Smith Productions"
+    ,"Evans, Richards and Webb Productions"
+    ,"Chapman, Coles and Howard Productions"
+    ,"James LLC Productions"
+    ,"Burton-Matthews Productions"
+    ,"White-Clark Productions"
+    ,"Smith, Jackson and Richardson Productions"
+    ,"Gibbs and Sons Productions"
+    ,"Taylor, Thomas and Hunter Productions"
+    ,"Atkins-Schofield Productions"
+    ,"George-Whitehead Productions"
+    ,"Smith-Bishop Productions"
+    ,"Marshall and Sons Productions"
+    ,"Duncan-Lewis Productions"
+    ,"Lee, James and Russell Productions"
+    ,"Barker-Conway Productions"
+    ,"Craig, Gardner and Murphy Productions"
+    ,"Wilson, Higgins and Butler Productions"
+    ,"Hamilton Ltd Productions"
+    ,"Perry, Davis and Lloyd Productions"
+    ,"Chapman-Moss Productions"
+    ,"Thomson, Holloway and Davies Productions"};
+
 
     private final static Duration[] durations = {Duration.ofMinutes(60),Duration.ofMinutes(120)};
     public final static int[] roomIds = {1,2,3,4,5,6,7,8};

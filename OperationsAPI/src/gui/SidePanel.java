@@ -7,14 +7,21 @@ import java.awt.event.MouseEvent;
 
 public class SidePanel extends JPanel {
 
-    private boolean inFrame = false;
+    private boolean isOpen = false;
     private final MusicHallCalendar calendar;
 
     public SidePanel(MusicHallCalendar calendar) {
         this.calendar = calendar;
 
-        setBackground(MusicHallCalendar.primaryColor);
+        setBackground(MusicHallCalendar.backgroundColor);
+        setBorder(BorderFactory.createLineBorder(MusicHallCalendar.primaryColor));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
+        Image logo = MusicHallCalendar.logo.getImage().getScaledInstance(100,100,Image.SCALE_SMOOTH);
+        ImageIcon logoIcon = new ImageIcon(logo);
+        JLabel logoLabel = new JLabel(logoIcon);
+        logoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        add(logoLabel);
 
         JLabel title = new JLabel("Operations");
         title.setPreferredSize(new Dimension(getWidth(),80));
@@ -53,10 +60,10 @@ public class SidePanel extends JPanel {
         add(contractsLbl);
 
     }
-    public boolean isInFrame() {
-        return inFrame;
+    public boolean isOpen() {
+        return isOpen;
     }
-    public void setInFrame(boolean inFrame) {
-        this.inFrame = inFrame;
+    public void setOpen(boolean open) {
+        this.isOpen = open;
     }
 }
