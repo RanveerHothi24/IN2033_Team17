@@ -33,7 +33,7 @@ public class CalendarPanel extends JPanel {
         currentMonth = today.getMonthValue();
         currentYear = today.getYear();
 
-        for (int i = 0; i <= 48; i++){
+        for (int i = 0; i <= 6; i++){
             int month = currentMonth + i;
             int year = currentYear;
 
