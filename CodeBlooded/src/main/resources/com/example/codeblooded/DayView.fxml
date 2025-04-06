@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.GridPane?>
+
+<VBox prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.codeblooded.DayViewController">
+    <FlowPane fx:id="legendPane" prefHeight="360.0" />
+    <GridPane fx:id="timeslotGrid" VBox.vgrow="ALWAYS" />
+</VBox>
