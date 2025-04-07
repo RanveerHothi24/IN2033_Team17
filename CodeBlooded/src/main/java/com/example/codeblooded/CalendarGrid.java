@@ -9,6 +9,9 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.*;
+
+import javafx.scene.control.TextField;
 
 public class CalendarGrid extends Application {
 
@@ -19,6 +22,9 @@ public class CalendarGrid extends Application {
     private StackPane[][] dayCells;
     private Label[][] dayLabels;
     private static final double CELL_SPACING = 5;
+
+    private List<String> selectedRooms = new ArrayList<>();
+    private String selectedCompany = null;
 
     @Override
     public void start(Stage primaryStage) {
@@ -236,10 +242,12 @@ public class CalendarGrid extends Application {
             for (int col = 0; col < 7; col++) {
                 int dayNumber = 1 + 7 * row + col - firstColumn;
                 if (dayNumber >= 1 && dayNumber <= lengthOfMonth) {
+                    LocalDate date = displayedYearMonth.atDay(dayNumber);
                     dayLabels[row][col].setText(dayNumber + "/" + displayedYearMonth.getMonthValue());
                     dayCells[row][col].getStyleClass().add("active-day");
-                    LocalDate date = displayedYearMonth.atDay(dayNumber);
-                    dayCells[row][col].getStyleClass().removeAll("past", "today", "future");
+
+                    // Apply past/today/future styles
+                    dayCells[row][col].getStyleClass().removeAll("past", "today", "future", "filtered-day");
                     if (date.isBefore(today)) {
                         dayCells[row][col].getStyleClass().add("past");
                     } else if (date.isEqual(today)) {
@@ -247,9 +255,23 @@ public class CalendarGrid extends Application {
                     } else {
                         dayCells[row][col].getStyleClass().add("future");
                     }
+
+                    // Apply filter highlighting
+                    List<Booking> bookings = getBookingsForDate(date);
+                    boolean matchesFilter = false;
+                    for (Booking booking : bookings) {
+                        if ((selectedRooms.isEmpty() || selectedRooms.contains(booking.getRoom())) &&
+                                (selectedCompany == null || selectedCompany.equals(booking.getCompany()))) {
+                            matchesFilter = true;
+                            break;
+                        }
+                    }
+                    if (matchesFilter) {
+                        dayCells[row][col].getStyleClass().add("filtered-day");
+                    }
                 } else {
                     dayLabels[row][col].setText("");
-                    dayCells[row][col].getStyleClass().removeAll("past", "today", "future", "active-day");
+                    dayCells[row][col].getStyleClass().removeAll("past", "today", "future", "active-day", "filtered-day");
                 }
             }
         }
@@ -263,33 +285,78 @@ public class CalendarGrid extends Application {
 
 
     private VBox createFilterPanel() {
-        VBox filterPanel = new VBox();
+        VBox filterPanel = new VBox(10);
         filterPanel.setStyle("-fx-background-color: #444444;");
         filterPanel.setPrefWidth(200);
-        Label filterLabel = new Label("Filters");
-        filterLabel.setStyle("-fx-text-fill: white;");
-        CheckBox filter1 = new CheckBox("Filter 1");
-        filter1.setStyle("-fx-text-fill: white;");
-        CheckBox filter2 = new CheckBox("Filter 2");
-        filter2.setStyle("-fx-text-fill: white;");
+        filterPanel.setPadding(new Insets(10));
+
+        // Top half: Room filters
+        Label roomFilterLabel = new Label("Room Filters");
+        roomFilterLabel.setStyle("-fx-text-fill: white;");
+        CheckBox mainHallCheck = new CheckBox("Main Hall");
+        mainHallCheck.setStyle("-fx-text-fill: white;");
+        CheckBox smallHallCheck = new CheckBox("Small Hall");
+        smallHallCheck.setStyle("-fx-text-fill: white;");
+        CheckBox rehearsalCheck = new CheckBox("Rehearsal Space");
+        rehearsalCheck.setStyle("-fx-text-fill: white;");
+
+        // Bottom half: Company search
+        Label companySearchLabel = new Label("Company Search");
+        companySearchLabel.setStyle("-fx-text-fill: white;");
+        TextField searchField = new TextField();
+        searchField.setPromptText("Search companies...");
+        ListView<String> companyListView = new ListView<>();
+        companyListView.setPrefHeight(150); // Limit height to ensure scrolling
+
+        // Populate company list with unique company names
+        Set<String> companies = new HashSet<>();
+        for (Booking booking : ExampleData.bookings) {
+            companies.add(booking.getCompany());
+        }
+        companyListView.getItems().addAll(companies);
+
+        // Filter company list based on search input
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            companyListView.getItems().clear();
+            for (String company : companies) {
+                if (company.toLowerCase().contains(newValue.toLowerCase())) {
+                    companyListView.getItems().add(company);
+                }
+            }
+        });
+
+        // Buttons
         Button applyButton = new Button("Apply");
         Button resetButton = new Button("Reset");
 
-        resetButton.setOnAction(e -> {
-            filter1.setSelected(false);
-            filter2.setSelected(false);
-        });
-
         applyButton.setOnAction(e -> {
-            String filters = "";
-            if (filter1.isSelected()) filters += "Filter admin1, ";
-            if (filter2.isSelected()) filters += "Filter 2, ";
-            System.out.println("Applied these filters: " + (filters.isEmpty() ? "None" : filters.substring(0, filters.length() - 2)));
+            selectedRooms.clear();
+            if (mainHallCheck.isSelected()) selectedRooms.add("Main Hall");
+            if (smallHallCheck.isSelected()) selectedRooms.add("Small Hall");
+            if (rehearsalCheck.isSelected()) selectedRooms.add("Rehearsal Space");
+            selectedCompany = companyListView.getSelectionModel().getSelectedItem();
+            populateGrid(); // Refresh calendar with filters
         });
 
-        filterPanel.getChildren().addAll(filterLabel, filter1, filter2, applyButton, resetButton);
-        filterPanel.setSpacing(10);
-        filterPanel.setPadding(new Insets(10));
+        resetButton.setOnAction(e -> {
+            mainHallCheck.setSelected(false);
+            smallHallCheck.setSelected(false);
+            rehearsalCheck.setSelected(false);
+            searchField.clear();
+            companyListView.getItems().clear();
+            companyListView.getItems().addAll(companies); // Reset list
+            companyListView.getSelectionModel().clearSelection();
+            selectedRooms.clear();
+            selectedCompany = null;
+            populateGrid(); // Refresh calendar
+        });
+
+        // Layout
+        VBox topHalf = new VBox(5, roomFilterLabel, mainHallCheck, smallHallCheck, rehearsalCheck);
+        VBox bottomHalf = new VBox(5, companySearchLabel, searchField, companyListView);
+        HBox buttons = new HBox(10, applyButton, resetButton);
+        filterPanel.getChildren().addAll(topHalf, new Separator(), bottomHalf, buttons);
+
         return filterPanel;
     }
 
@@ -297,6 +364,15 @@ public class CalendarGrid extends Application {
         Scene calendarScene = primaryStage.getScene();
         TimelineView timelineView = new TimelineView(primaryStage, selectedDate, calendarScene);
         primaryStage.setScene(timelineView.getView());
+    }
+    private List<Booking> getBookingsForDate(LocalDate date) {
+        List<Booking> bookings = new ArrayList<>();
+        for (Booking booking : ExampleData.bookings) {
+            if (booking.getDate().equals(date)) {
+                bookings.add(booking);
+            }
+        }
+        return bookings;
     }
 
 

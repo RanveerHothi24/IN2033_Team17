@@ -25,25 +25,6 @@
     -fx-background-color: #222222;
 }
 
-.day-cell {
-    -fx-background-color: transparent;
-}
-
-.day-cell.past {
-    -fx-background-color: #cccccc;
-    -fx-background-radius: 5px;
-}
-
-.day-cell.today {
-    -fx-background-color: #1ac414;
-    -fx-background-radius: 5px;
-}
-
-.day-cell.future {
-    -fx-background-color: #f0f0f0;
-    -fx-background-radius: 5px;
-}
-
 .day-cell.future:hover {
     -fx-background-color: #129030;
 }
@@ -91,6 +72,9 @@
 
 .day-cell.future:hover {
     -fx-background-color: #129030;
+}
+.day-cell.filtered-day {
+    -fx-background-color: #4a8a02;
 }
 
 /* New TimelineView styles */

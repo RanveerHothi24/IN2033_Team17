@@ -1,17 +1,28 @@
 package com.example.codeblooded;
 
-public class Booking {
-    private int startHour;  // e.g., 11 for 11:00
-    private int endHour;    // e.g., 13 for 13:00 (exclusive end)
-    private String company; // Name of the company
+import java.time.LocalDate;
 
-    public Booking(int startHour, int endHour, String company) {
+public class Booking {
+    private int bookingId;
+    private LocalDate date;
+    private String room;
+    private int startHour;
+    private int endHour;
+    private String companyName;
+
+    public Booking(int bookingId, LocalDate date, String room, int startHour, int endHour, String companyName) {
+        this.bookingId = bookingId;
+        this.date = date;
+        this.room = room;
         this.startHour = startHour;
         this.endHour = endHour;
-        this.company = company;
+        this.companyName = companyName;
     }
 
+    public int getBookingId() { return bookingId; }
+    public LocalDate getDate() { return date; }
+    public String getRoom() { return room; }
     public int getStartHour() { return startHour; }
     public int getEndHour() { return endHour; }
-    public String getCompany() { return company; }
+    public String getCompany() { return companyName; }
 }
