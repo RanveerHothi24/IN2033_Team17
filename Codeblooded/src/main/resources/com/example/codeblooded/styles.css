@@ -178,3 +178,109 @@
 .book-button:hover {
     -fx-background-color: #129030;
 }
+
+.login-label {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+}
+
+.login-field {
+    -fx-pref-width: 200px;
+    -fx-background-color: #444444;
+    -fx-text-fill: white;
+}
+
+.login-button {
+    -fx-background-color: #1ac414;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+}
+
+.error-label {
+    -fx-text-fill: red;
+    -fx-font-size: 12px;
+}
+.has-bookings {
+    -fx-background-color: lightblue;
+}
+.day-cell {
+    -fx-background-color: white;
+}
+
+.past {
+    -fx-background-color: lightgray;
+}
+
+.today {
+    -fx-background-color: yellow;
+}
+
+.future {
+    -fx-background-color: white;
+}
+
+.fully-booked {
+    -fx-background-color: darkgreen;
+}
+
+.partially-booked {
+    -fx-background-color: green;
+}
+
+.minimally-booked {
+    -fx-background-color: lightgreen;
+}
+.timeline-hour-label {
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+
+.timeline-room-label {
+    -fx-font-weight: bold;
+    -fx-padding: 5px;
+}
+
+.timeline-cell {
+    -fx-pref-width: 60px;
+    -fx-pref-height: 40px;
+    -fx-border-color: #ccc;
+    -fx-border-width: 1px;
+}
+
+
+
+.section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 10px 0;
+}
+
+.bottom-section {
+    -fx-padding: 10px 0 0 0;
+}
+
+
+
+.booking-block {
+    -fx-pref-width: 60px;
+    -fx-pref-height: 40px;
+    -fx-background-insets: 0;
+    -fx-alignment: center;
+}
+.timeline-cell {
+    -fx-background-color: #444444;
+    -fx-border-width: 1px;
+    -fx-border-color: #ccc;
+    -fx-pref-width: 60px;
+    -fx-pref-height: 40px;
+    -fx-background-insets: 0;
+}
+
+.company-color-box {
+    -fx-width: 10px;
+    -fx-height: 10px;
+}
+
+.company-label {
+    -fx-text-fill: white;
+}

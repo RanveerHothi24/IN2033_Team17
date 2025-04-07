@@ -10,8 +10,10 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RoomSelectionController {
 
@@ -31,29 +33,24 @@ public class RoomSelectionController {
             String roomName = text.getText();
             System.out.println("Clicked on: " + roomName);
 
-            // Load DayView after room selection
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/codeblooded/DayView.fxml"));
                 Parent dayViewRoot = loader.load();
 
-                // Get the DayViewController and set sample bookings
                 DayViewController dayViewController = loader.getController();
+                // Fetch bookings for the room and a sample date (e.g., today)
+                LocalDate sampleDate = LocalDate.now();
+                List<Booking> bookings = new BookingDAO().getBookingsForDate(sampleDate)
+                        .stream()
+                        .filter(b -> b.getRoom().equals(roomName))
+                        .collect(Collectors.toList());
+                dayViewController.setBookings(bookings);
 
-                // Hardcoded sample bookings for testing
-                List<Booking> sampleBookings = Arrays.asList(
-                        new Booking(11, 13, "Company A"), // 11:00 to 13:00
-                        new Booking(14, 16, "Company B"), // 14:00 to 16:00
-                        new Booking(18, 20, "Company C")  // 18:00 to 20:00
-                );
-                dayViewController.setBookings(sampleBookings);
-
-                // Create a new scene with 1280x720 dimensions
                 Scene dayViewScene = new Scene(dayViewRoot, 1280, 720);
                 Stage stage = new Stage();
                 stage.setScene(dayViewScene);
-                stage.setTitle("Bookings for " + roomName + " on [Selected Day]");
+                stage.setTitle("Bookings for " + roomName + " on " + sampleDate);
                 stage.show();
-
             } catch (IOException e) {
                 e.printStackTrace();
                 System.out.println("Error loading DayView.fxml");

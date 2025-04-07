@@ -1,142 +1,208 @@
 package com.example.codeblooded;
 
-import javafx.application.Application;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+
 import java.time.LocalDate;
+import java.util.*;
 
-public class TimelineView extends Application {
-
+public class TimelineView {
     private final String[] rooms = {"Main Hall", "Small Hall", "Rehearsal Space"};
     private final int[] hours = {11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
+    private Stage stage;
+    private Scene calendarScene;
+    private LocalDate selectedDate;
+    private List<Booking> bookings;
+    private Map<String, Color> companyColors = new HashMap<>();
+    private VBox contractDetailsSection;
+    private BorderPane root;
 
-    @Override
-    public void start(Stage primaryStage) {
-        BorderPane root = new BorderPane();
+    public TimelineView(Stage stage, Scene calendarScene, LocalDate selectedDate) {
+        this.stage = stage;
+        this.calendarScene = calendarScene;
+        this.selectedDate = selectedDate;
+        this.bookings = new BookingDAO().getBookingsForDate(selectedDate);
+    }
+
+    public Scene createScene() {
+        assignCompanyColors();
+        root = new BorderPane();
         root.getStyleClass().add("root");
 
-        // Top: Timeline Grid
+        Button backButton = new Button("Back to Calendar");
+        backButton.setOnAction(e -> stage.setScene(calendarScene));
+        HBox topBar = new HBox(backButton);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setPadding(new Insets(10));
+        root.setTop(topBar);
+
         GridPane timelineGrid = createTimelineGrid();
-        root.setTop(timelineGrid);
+        root.setCenter(timelineGrid);
         BorderPane.setAlignment(timelineGrid, Pos.CENTER);
         BorderPane.setMargin(timelineGrid, new Insets(20));
 
-        // Bottom: Three Sections (Contract, Booking, Financial)
-        HBox bottomSection = createBottomSection(); // Fixed typo: 'bottomSection' not 'customSection'
+        HBox bottomSection = createBottomSection();
         root.setBottom(bottomSection);
         BorderPane.setMargin(bottomSection, new Insets(20));
 
-        // Create and set the scene with CSS
         Scene scene = new Scene(root, 1280, 720);
         scene.getStylesheets().add(getClass().getResource("/com/example/codeblooded/styles.css").toExternalForm());
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Timeline View - Lancaster Music Hall");
-        primaryStage.show();
+        return scene;
     }
 
-    // Create the timeline grid (Top Half)
     private GridPane createTimelineGrid() {
         GridPane grid = new GridPane();
-        grid.setHgap(5);
-        grid.setVgap(5);
+        grid.setHgap(0);
+        grid.setVgap(1);
         grid.setAlignment(Pos.CENTER);
 
-        // Add hour labels (top row)
+        // Add hour labels
         for (int i = 0; i < hours.length; i++) {
             Label hourLabel = new Label(hours[i] + ":00");
             hourLabel.getStyleClass().add("timeline-hour-label");
-            GridPane.setHalignment(hourLabel, javafx.geometry.HPos.CENTER);
+            GridPane.setHalignment(hourLabel, HPos.CENTER);
             grid.add(hourLabel, i + 1, 0);
         }
 
-        // Add room labels and empty cells
+        // Add room labels
         for (int row = 0; row < rooms.length; row++) {
             Label roomLabel = new Label(rooms[row]);
             roomLabel.getStyleClass().add("timeline-room-label");
             grid.add(roomLabel, 0, row + 1);
+        }
 
+        // Populate grid with bookings
+        for (Booking booking : bookings) {
+            int startColumn = booking.getStartHour() - 11;
+            int endColumn = booking.getEndHour() - 11;
+            int roomIndex = Arrays.asList(rooms).indexOf(booking.getRoom());
+
+            if (roomIndex != -1 && startColumn >= 0 && startColumn < 13 && endColumn > startColumn) {
+                Color color = companyColors.get(booking.getCompany());
+                for (int col = startColumn; col < endColumn; col++) {
+                    StackPane bookingBlock = new StackPane();
+                    bookingBlock.getStyleClass().add("booking-block");
+                    bookingBlock.setStyle("-fx-background-color: " + toHex(color) + ";");
+                    bookingBlock.setOnMouseClicked(e -> {
+                        ContractDAO contractDAO = new ContractDAO();
+                        Client client = contractDAO.getContractDetails(booking.getCompany());
+                        if (client != null) {
+                            updateContractDetailsSection(client);
+                        } else {
+                            contractDetailsSection.getChildren().clear();
+                            Label title = new Label("Contract Details");
+                            title.getStyleClass().add("section-title");
+                            Label message = new Label("No contract details found for " + booking.getCompany());
+                            message.getStyleClass().add("section-text");
+                            contractDetailsSection.getChildren().addAll(title, message);
+                        }
+                    });
+                    grid.add(bookingBlock, col + 1, roomIndex + 1, 1, 1);
+                }
+            }
+        }
+
+        // Fill empty cells
+        for (int row = 0; row < rooms.length; row++) {
             for (int col = 0; col < hours.length; col++) {
-                StackPane cell = new StackPane();
-                cell.setPrefSize(80, 40);
-                cell.getStyleClass().add("timeline-cell");
-                grid.add(cell, col + 1, row + 1);
+                int finalRow = row;
+                int finalCol = col;
+                if (grid.getChildren().stream().noneMatch(node ->
+                        GridPane.getRowIndex(node) == finalRow + 1 && GridPane.getColumnIndex(node) == finalCol + 1)) {
+                    StackPane cell = new StackPane();
+                    cell.getStyleClass().add("timeline-cell");
+                    grid.add(cell, col + 1, row + 1);
+                }
             }
         }
 
         return grid;
     }
 
-    // Create the bottom section (Contract, Booking, Financial)
     private HBox createBottomSection() {
         HBox bottom = new HBox(20);
         bottom.setAlignment(Pos.CENTER);
         bottom.getStyleClass().add("bottom-section");
 
-        // Contract Tab (Left)
-        VBox contractTab = createContractTab();
-        HBox.setHgrow(contractTab, Priority.ALWAYS);
+        // Company list section
+        ContractDisplay.clearCompanyList();
+        for (Booking booking : bookings) {
+            Color color = companyColors.get(booking.getCompany());
+            String timeSlot = booking.getStartHour() + ":00 - " + booking.getEndHour() + ":00";
+            ContractDisplay.addCompanyToList(booking.getCompany(), timeSlot, color);
+        }
+        VBox companyListSection = ContractDisplay.getCompanyListBox();
+        companyListSection.setAlignment(Pos.TOP_CENTER);
+        companyListSection.getStyleClass().add("section-box");
+        Label companyListTitle = new Label("Companies Booked");
+        companyListTitle.getStyleClass().add("section-title");
+        companyListSection.getChildren().add(0, companyListTitle);
 
-        // Booking Slot (Center)
+        // Contract details section
+        contractDetailsSection = new VBox(10);
+        contractDetailsSection.setAlignment(Pos.TOP_CENTER);
+        contractDetailsSection.getStyleClass().add("section-box");
+        Label contractTitle = new Label("Contract Details");
+        contractTitle.getStyleClass().add("section-title");
+        Label selectMessage = new Label("Select a booking to view contract details");
+        selectMessage.getStyleClass().add("section-text");
+        contractDetailsSection.getChildren().addAll(contractTitle, selectMessage);
+
+        // Booking slot
         VBox bookingSlot = createBookingSlot();
-        HBox.setHgrow(bookingSlot, Priority.ALWAYS);
 
-        // Financial Report (Right)
-        VBox financialReport = createFinancialReport();
-        HBox.setHgrow(financialReport, Priority.ALWAYS);
-
-        bottom.getChildren().addAll(contractTab, bookingSlot, financialReport);
+        bottom.getChildren().addAll(companyListSection, contractDetailsSection, bookingSlot);
         return bottom;
     }
 
-    // Contract Tab (Bottom Left)
-    private VBox createContractTab() {
-        VBox contractTab = new VBox(10);
-        contractTab.setAlignment(Pos.TOP_CENTER);
-        contractTab.getStyleClass().add("section-box");
-
-        Label title = new Label("Contract Rates");
+    private void updateContractDetailsSection(Client client) {
+        contractDetailsSection.getChildren().clear();
+        Label title = new Label("Contract Details");
         title.getStyleClass().add("section-title");
+        Label company = new Label("Company: " + client.getCompanyName());
+        Label contact = new Label("Contact: " + client.getContactName());
+        Label email = new Label("Email: " + client.getContactEmail());
+        Label phone = new Label("Phone: " + client.getPhoneNumber());
+        Label address = new Label("Address: " + client.getStreetAddress());
+        Label city = new Label("City: " + client.getCity());
+        Label postcode = new Label("Postcode: " + client.getPostcode());
+        Label billingName = new Label("Billing Name: " + (client.getBillingName() != null ? client.getBillingName() : "N/A"));
+        Label billingEmail = new Label("Billing Email: " + (client.getBillingEmail() != null ? client.getBillingEmail() : "N/A"));
 
-        Label mainHallLabel = new Label("Main Hall:");
-        mainHallLabel.getStyleClass().add("section-subtitle");
-        Label mainHallHourly = new Label("  Hourly: £325 + VAT (10:00-17:00, Mon-Fri)");
-        mainHallHourly.getStyleClass().add("section-text");
-        Label mainHallEvening = new Label("  Evening: £1,850 + VAT (17:00-00:00, Mon-Thu)");
-        mainHallEvening.getStyleClass().add("section-text");
-        Label mainHallDaily = new Label("  Daily: £3,800 + VAT (10:00-00:00, Mon-Thu)");
-        mainHallDaily.getStyleClass().add("section-text");
+        for (Label label : new Label[]{company, contact, email, phone, address, city, postcode, billingName, billingEmail}) {
+            label.getStyleClass().add("section-text");
+        }
 
-        Label smallHallLabel = new Label("Small Hall:");
-        smallHallLabel.getStyleClass().add("section-subtitle");
-        Label smallHallHourly = new Label("  Hourly: £225 + VAT (10:00-17:00, Mon-Fri)");
-        smallHallHourly.getStyleClass().add("section-text");
-        Label smallHallEvening = new Label("  Evening: £950 + VAT (17:00-00:00, Mon-Thu)");
-        smallHallEvening.getStyleClass().add("section-text");
-        Label smallHallDaily = new Label("  Daily: £2,200 + VAT (10:00-00:00, Mon-Thu)");
-        smallHallDaily.getStyleClass().add("section-text");
-
-        Label rehearsalLabel = new Label("Rehearsal Space:");
-        rehearsalLabel.getStyleClass().add("section-subtitle");
-        Label rehearsalHourly = new Label("  Hourly: £60 + VAT (10:00-17:00, Mon-Fri)");
-        rehearsalHourly.getStyleClass().add("section-text");
-        Label rehearsalDaily = new Label("  Daily: £240 + VAT (10:00-17:00, Mon-Fri)");
-        rehearsalDaily.getStyleClass().add("section-text");
-
-        contractTab.getChildren().addAll(
-                title,
-                mainHallLabel, mainHallHourly, mainHallEvening, mainHallDaily,
-                smallHallLabel, smallHallHourly, smallHallEvening, smallHallDaily,
-                rehearsalLabel, rehearsalHourly, rehearsalDaily
-        );
-
-        return contractTab;
+        contractDetailsSection.getChildren().addAll(title, company, contact, email, phone, address, city, postcode, billingName, billingEmail);
     }
 
-    // Booking Slot (Bottom Center)
+    private String toHex(Color color) {
+        return String.format("#%02X%02X%02X",
+                (int) (color.getRed() * 255),
+                (int) (color.getGreen() * 255),
+                (int) (color.getBlue() * 255));
+    }
+
+    private void assignCompanyColors() {
+        Set<String> uniqueCompanies = new HashSet<>();
+        for (Booking booking : bookings) {
+            uniqueCompanies.add(booking.getCompany());
+        }
+        Random random = new Random();
+        for (String company : uniqueCompanies) {
+            if (!companyColors.containsKey(company)) {
+                Color color = Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256));
+                companyColors.put(company, color);
+            }
+        }
+    }
+
     private VBox createBookingSlot() {
         VBox bookingSlot = new VBox(15);
         bookingSlot.setAlignment(Pos.CENTER);
@@ -181,46 +247,33 @@ public class TimelineView extends Application {
             Integer end = endTimeCombo.getValue();
             String company = companyField.getText();
 
-            if (room != null && date != null && start != null && end != null && !company.isEmpty()) {
-                System.out.println("Booking for " + room + " on " + date + " from " + start + ":00 to " + end + ":00 by " + company);
+            if (room != null && date != null && start != null && end != null && !company.isEmpty() && start < end) {
+                BookingDAO bookingDAO = new BookingDAO();
+                bookingDAO.insertBooking(room, date, start, end, company);
+
+                // Refresh the timeline if the booking is for the current date
+                if (date.equals(selectedDate)) {
+                    bookings = bookingDAO.getBookingsForDate(selectedDate);
+                    root.setCenter(createTimelineGrid());
+                }
+
+                // Show success message
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Booking Success");
+                alert.setHeaderText(null);
+                alert.setContentText("Booking created successfully!");
+                alert.showAndWait();
             } else {
-                System.out.println("Please fill all fields");
+                // Show error message
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Booking Error");
+                alert.setHeaderText(null);
+                alert.setContentText("Please fill all fields correctly. Ensure the start time is before the end time.");
+                alert.showAndWait();
             }
         });
 
         bookingSlot.getChildren().addAll(title, roomCombo, datePicker, startTimeCombo, endTimeCombo, companyField, bookButton);
         return bookingSlot;
-    }
-
-    // Financial Report (Bottom Right)
-    private VBox createFinancialReport() {
-        VBox financialReport = new VBox(10);
-        financialReport.setAlignment(Pos.TOP_CENTER);
-        financialReport.getStyleClass().add("section-box");
-
-        Label title = new Label("Financial Report");
-        title.getStyleClass().add("section-title");
-
-        Label overviewLabel = new Label("Sample Rates Overview:");
-        overviewLabel.getStyleClass().add("section-subtitle");
-        Label mainHallRate = new Label("Main Hall Daily (Mon-Thu): £3,800 + VAT");
-        mainHallRate.getStyleClass().add("section-text");
-        Label smallHallRate = new Label("Small Hall Evening (Mon-Thu): £950 + VAT");
-        smallHallRate.getStyleClass().add("section-text");
-        Label rehearsalRate = new Label("Rehearsal Space Hourly: £60 + VAT");
-        rehearsalRate.getStyleClass().add("section-text");
-        Label pendingLabel = new Label("(Detailed report pending booking data)");
-        pendingLabel.getStyleClass().add("section-text-italic");
-
-        financialReport.getChildren().addAll(
-                title,
-                overviewLabel, mainHallRate, smallHallRate, rehearsalRate, pendingLabel
-        );
-
-        return financialReport;
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }

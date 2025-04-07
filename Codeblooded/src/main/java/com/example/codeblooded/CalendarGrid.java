@@ -9,6 +9,8 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.Map;
+import java.util.Set;
 
 public class CalendarGrid extends Application {
 
@@ -20,14 +22,22 @@ public class CalendarGrid extends Application {
     private Label[][] dayLabels;
     private static final double CELL_SPACING = 5;
 
+    private BookingDAO bookingDAO = new BookingDAO(); // Add DAO instance
+
+    private Scene calendarScene;
+
     @Override
-    public void start(Stage primaryStage) {
-        // Create and set the login scene as the initial view
-        Scene loginScene = createLoginScene(primaryStage);
-        primaryStage.setScene(loginScene);
-        primaryStage.setTitle("Login");
-        primaryStage.show();
-    }
+
+        public void start(Stage primaryStage) {
+            Scene loginScene = createLoginScene(primaryStage);
+            primaryStage.setScene(loginScene);
+            primaryStage.setTitle("Login");
+            primaryStage.show();
+            currentYearMonth = YearMonth.now();
+            displayedYearMonth = currentYearMonth;
+            // Remove populateGrid() from here
+        }
+
 
     /** Creates the login scene with username and password fields */
     private Scene createLoginScene(Stage primaryStage) {
@@ -61,18 +71,18 @@ public class CalendarGrid extends Application {
 
         // Login button action
         loginButton.setOnAction(e -> {
-            String username = usernameField.getText();
+            String username = usernameField.getText().trim(); // Also fixes spacebar issue
             String password = passwordField.getText();
-            if (username.equals("admin") && password.equals("password")) {  // Hardcoded credentials
-                Scene calendarScene = createCalendarScene();
-                primaryStage.setScene(calendarScene);
+            if (username.equals("") && password.equals("")) {
+                this.calendarScene = createCalendarScene();
+                primaryStage.setScene(this.calendarScene);
                 primaryStage.setTitle("Calendar Grid");
             } else {
-                errorLabel.setText("incorrect username or password");
+                errorLabel.setText("Incorrect username or password");
             }
         });
 
-        return new Scene(loginBox, 400, 300);  // Compact size for login screen
+        return new Scene(loginBox, 1280, 720);  // Compact size for login screen
     }
 
     /** Creates the calendar scene (moved from start method) */
@@ -83,8 +93,8 @@ public class CalendarGrid extends Application {
         HBox header = createHeader();
         HBox navigation = createNavigation();
         GridPane daysOfWeek = createDaysOfWeek();
-        grid = createGrid();
-        populateGrid();
+        grid = createGrid(); // Initializes dayCells and dayLabels
+        populateGrid();      // Populate the grid after initialization
 
         VBox calendarBox = new VBox(navigation, daysOfWeek, grid);
         calendarBox.setSpacing(10);
@@ -200,7 +210,10 @@ public class CalendarGrid extends Application {
                     if (!dayText.isEmpty()) {
                         int dayNumber = Integer.parseInt(dayText.split("/")[0]);
                         LocalDate selectedDate = displayedYearMonth.atDay(dayNumber);
-                        handleDaySelection(selectedDate, (Stage) dayCells[finalRow][finalCol].getScene().getWindow());
+                        Stage stage = (Stage) dayCells[r][c].getScene().getWindow();
+                        TimelineView timelineView = new TimelineView(stage, this.calendarScene, selectedDate);
+                        Scene timelineScene = timelineView.createScene();
+                        stage.setScene(timelineScene);
                     }
                 });
             }
@@ -226,20 +239,24 @@ public class CalendarGrid extends Application {
         return gridPane;
     }
 
+
     private void populateGrid() {
         LocalDate firstDay = displayedYearMonth.atDay(1);
         int firstColumn = (firstDay.getDayOfWeek().getValue() - 1) % 7;
         int lengthOfMonth = displayedYearMonth.lengthOfMonth();
         LocalDate today = LocalDate.now();
+        Map<LocalDate, Integer> bookingCounts = bookingDAO.getRoomBookingCountsForMonth(displayedYearMonth);
 
         for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 7; col++) {
                 int dayNumber = 1 + 7 * row + col - firstColumn;
                 if (dayNumber >= 1 && dayNumber <= lengthOfMonth) {
-                    dayLabels[row][col].setText(dayNumber + "/" + displayedYearMonth.getMonthValue());
-                    dayCells[row][col].getStyleClass().add("active-day");
                     LocalDate date = displayedYearMonth.atDay(dayNumber);
-                    dayCells[row][col].getStyleClass().removeAll("past", "today", "future");
+                    dayLabels[row][col].setText(String.valueOf(dayNumber)); // Show only day number
+                    dayCells[row][col].getStyleClass().add("active-day");
+                    dayCells[row][col].getStyleClass().removeAll("past", "today", "future", "fully-booked", "partially-booked", "minimally-booked");
+
+                    // Apply date-based styles
                     if (date.isBefore(today)) {
                         dayCells[row][col].getStyleClass().add("past");
                     } else if (date.isEqual(today)) {
@@ -247,13 +264,28 @@ public class CalendarGrid extends Application {
                     } else {
                         dayCells[row][col].getStyleClass().add("future");
                     }
+
+                    // Apply booking-based styles
+                    if (((Map<?, ?>) bookingCounts).containsKey(date)) {
+                        int roomCount = bookingCounts.get(date);
+                        if (roomCount == 3) {
+                            dayCells[row][col].getStyleClass().add("fully-booked");
+                        } else if (roomCount == 2) {
+                            dayCells[row][col].getStyleClass().add("partially-booked");
+                        } else if (roomCount == 1) {
+                            dayCells[row][col].getStyleClass().add("minimally-booked");
+                        }
+                    }
                 } else {
                     dayLabels[row][col].setText("");
-                    dayCells[row][col].getStyleClass().removeAll("past", "today", "future", "active-day");
+                    dayCells[row][col].getStyleClass().removeAll("past", "today", "future", "active-day", "fully-booked", "partially-booked", "minimally-booked");
                 }
             }
         }
     }
+
+    // Rest of the class...
+
 
     private void updateCalendar() {
         monthLabel.setText(displayedYearMonth.getMonth().toString() + " " + displayedYearMonth.getYear());
@@ -268,39 +300,44 @@ public class CalendarGrid extends Application {
         filterPanel.setPrefWidth(200);
         Label filterLabel = new Label("Filters");
         filterLabel.setStyle("-fx-text-fill: white;");
-        CheckBox filter1 = new CheckBox("Filter 1");
+        CheckBox filter1 = new CheckBox("MH");
         filter1.setStyle("-fx-text-fill: white;");
-        CheckBox filter2 = new CheckBox("Filter 2");
+
+        CheckBox filter2 = new CheckBox("SH");
         filter2.setStyle("-fx-text-fill: white;");
+
+        CheckBox filter3 = new CheckBox("F");
+        filter3.setStyle("-fx-text-fill: white;");
+
+        CheckBox filter4 = new CheckBox("M");
+        filter4.setStyle("-fx-text-fill: white;");
+
         Button applyButton = new Button("Apply");
         Button resetButton = new Button("Reset");
 
         resetButton.setOnAction(e -> {
             filter1.setSelected(false);
             filter2.setSelected(false);
+            filter3.setSelected(false);
         });
 
         applyButton.setOnAction(e -> {
             String filters = "";
-            if (filter1.isSelected()) filters += "Filter admin1, ";
+            if (filter1.isSelected()) filters += "Filter 1, ";
             if (filter2.isSelected()) filters += "Filter 2, ";
+            if (filter3.isSelected()) filters += "Filter 3, ";
+            if (filter4.isSelected()) filters += "Filter 4, ";
+
             System.out.println("Applied these filters: " + (filters.isEmpty() ? "None" : filters.substring(0, filters.length() - 2)));
         });
 
-        filterPanel.getChildren().addAll(filterLabel, filter1, filter2, applyButton, resetButton);
+        filterPanel.getChildren().addAll(filterLabel, filter1, filter2, filter3, filter4, applyButton, resetButton);
         filterPanel.setSpacing(10);
         filterPanel.setPadding(new Insets(10));
         return filterPanel;
     }
 
-    private void handleDaySelection(LocalDate selectedDate, Stage primaryStage) {
-        TimelineView timelineView = new TimelineView();
-        try {
-            timelineView.start(primaryStage);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+
 
 
     public static void main(String[] args) {
