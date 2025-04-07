@@ -1,0 +1,49 @@
+/**
+ * Represents a customer review for an event.
+ */
+public class Review {
+    private int reviewId;
+    private int eventId;
+    private String reviewText;
+    private int rating;
+    private String response;
+
+    public Review(int reviewId, int eventId, String reviewText, int rating, String response) {
+        this.reviewId = reviewId;
+        this.eventId = eventId;
+        this.reviewText = reviewText;
+        this.rating = rating;
+        this.response = response;
+    }
+
+    public int getReviewId() {
+        return reviewId;
+    }
+
+    public int getEventId() {
+        return eventId;
+    }
+
+    public String getReviewText() {
+        return reviewText;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public String getResponse() {
+        return response;
+    }
+
+    @Override
+    public String toString() {
+        return "Review{" +
+               "reviewId=" + reviewId +
+               ", eventId=" + eventId +
+               ", reviewText='" + reviewText + '\'' +
+               ", rating=" + rating +
+               ", response='" + (response != null ? response : "N/A") + '\'' +
+               '}';
+    }
+}
