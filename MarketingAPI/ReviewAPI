@@ -3,21 +3,21 @@ import java.util.List;
 public interface ReviewAPI {
 
     /**
-     * Retrieves reviews for a specific event.
+     * Retrieves reviews for a specific event from the database.
      * @param eventId The ID of the event.
      * @return A list of reviews for the event.
      */
     List<Review> getShowReviews(int eventId);
 
     /**
-     * Retrieves the average rating for an event.
+     * Retrieves the average rating for an event from the database.
      * @param eventId The ID of the event.
      * @return The average rating, or -1 if no reviews exist.
      */
     double getAverageRating(int eventId);
 
     /**
-     * Analyzes reviews for areas of improvement.
+     * Analyzes reviews in the database for areas of improvement.
      * @return A string summarizing insights from negative reviews.
      */
     String getImprovementInsights();
