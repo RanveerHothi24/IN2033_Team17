@@ -1,0 +1,57 @@
+import java.util.List;
+
+public class BoxOfficeAppTest {
+    public static void main(String[] args) {
+        BoxOfficeOperations ops = new BoxOfficeOperationsImpl();
+
+        // Test getEventSchedule
+        System.out.println("Event Schedule:");
+        List<EventSchedule> schedules = ops.getEventSchedule();
+        schedules.forEach(System.out::println);
+
+        // Test searchEventScheduleByDate
+        System.out.println("\nEvents from 2029-04-01 to 2029-04-15:");
+        List<Event> eventsByDate = ops.searchEventScheduleByDate("2029-04-01", "2029-04-15");
+        eventsByDate.forEach(System.out::println);
+
+        // Test searchEventScheduleByType
+        System.out.println("\nLive Shows:");
+        List<Event> liveShows = ops.searchEventScheduleByType("LIVE SHOW", -1);
+        liveShows.forEach(System.out::println);
+
+        // Test notifyEventChanges
+        System.out.println("\nNotify Event Changes for Event ID 1:");
+        ops.notifyEventChanges(1);
+
+        // Test getVenueCapacity
+        System.out.println("\nVenue Capacity for MH:");
+        System.out.println(ops.getVenueCapacity("MH"));
+
+        // Test getListOfAllShows
+        System.out.println("\nList of All Shows:");
+        List<Show> shows = ops.getListOfAllShows();
+        shows.forEach(System.out::println);
+
+        // Test getShowTimeList
+        System.out.println("\nShow Time List:");
+        List<Show> showTimes = ops.getShowTimeList();
+        showTimes.forEach(System.out::println);
+
+        // Test getShowStartTime
+        System.out.println("\nStart Time for Event ID 1:");
+        System.out.println(ops.getShowStartTime(1));
+
+        // Test getShowDuration
+        System.out.println("\nDuration for Event ID 1 (in minutes):");
+        System.out.println(ops.getShowDuration(1));
+
+        // Test getSeatingAvailability
+        System.out.println("\nSeating Availability for Event ID 1:");
+        List<Seat> seats = ops.getSeatingAvailability(1);
+        seats.forEach(System.out::println);
+
+        // Test getUpdatedTicketPrice
+        System.out.println("\nUpdated Ticket Price for Event ID 1:");
+        System.out.println(ops.getUpdatedTicketPrice(1));
+    }
+}
