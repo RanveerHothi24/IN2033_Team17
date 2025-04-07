@@ -1,0 +1,27 @@
+import java.util.List;
+
+public interface VenueBooking {
+
+    /**
+     * Checks room availability within a date range.
+     * @param roomId The ID of the room.
+     * @param startDate The start date of the range (format: YYYY-MM-DD).
+     * @param endDate The end date of the range (format: YYYY-MM-DD).
+     * @return A list of scheduled events in the room during the period.
+     */
+    List<EventSchedule> getRoomAvailability(String roomId, String startDate, String endDate);
+
+    /**
+     * Retrieves seating configuration for an event.
+     * @param eventId The ID of the event.
+     * @return A list of seats with their configurations.
+     */
+    List<Seat> getSeatingConfiguration(int eventId);
+
+    /**
+     * Retrieves booking details including hold durations, deadlines, and special requirements.
+     * @param eventId The ID of the event.
+     * @return A string describing the booking details.
+     */
+    String getBookingDetails(int eventId);
+}
