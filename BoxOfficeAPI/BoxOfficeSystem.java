@@ -1,146 +1,285 @@
+import java.sql.*;
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class BoxOfficeSystem implements BoxOfficeOperations {
-    // Sample data storage
-    private Map<Integer, Double> ticketPrices;
-    private Map<Integer, Event> events;
-    private Map<Integer, List<Seat>> seatingAvailability;
-    private Map<Integer, Integer> venueCapacity;
-    private List<EventSchedule> eventSchedules;
-    private List<Show> showList;
+public class BoxOfficeOperationsImpl implements BoxOfficeOperations {
 
-    public BoxOfficeSystem() {
-        // Initialize with hypothetical data
-        ticketPrices = new HashMap<>();
-        ticketPrices.put(101, 50.0);
-        ticketPrices.put(102, 75.0);
-
-        // Creating Event Objects
-        events = new HashMap<>();
-        events.put(101, new Event(101, "Concert", LocalDateTime.of(2025, 2, 18, 19, 0), "Music"));
-        events.put(102, new Event(102, "Theatre", LocalDateTime.of(2025, 2, 18, 18, 0), "Drama"));
-
-        // Seating Availability
-        seatingAvailability = new HashMap<>();
-        seatingAvailability.put(101, Arrays.asList(
-                new Seat(1, "Row A, Seat 1", false, false),
-                new Seat(2, "Row A, Seat 2", true, false)
-        ));
-        seatingAvailability.put(102, Arrays.asList(
-                new Seat(3, "Row B, Seat 1", false, true),
-                new Seat(4, "Row B, Seat 2", false, false)
-        ));
-
-        // Venue Capacity
-        venueCapacity = new HashMap<>();
-        venueCapacity.put(1, 370);
-        venueCapacity.put(2, 285);
-
-        // Event Schedules
-        eventSchedules = Arrays.asList(
-                new EventSchedule(101, LocalDateTime.of(2025, 2, 18, 19, 0), "Main Hall"),
-                new EventSchedule(102, LocalDateTime.of(2025, 2, 18, 18, 0), "Small Hall")
-        );
-
-        // Show List
-        showList = Arrays.asList(
-                new Show(101, "Concert", LocalDateTime.of(2025, 2, 18, 19, 0), 120),
-                new Show(102, "Theatre", LocalDateTime.of(2025, 2, 18, 18, 0), 90)
-        );
-    }
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/in2033t17";
+    private static final String DB_USER = "your_username";
+    private static final String DB_PASSWORD = "your_password";
 
     @Override
     public double getUpdatedTicketPrice(int eventID) {
-        return ticketPrices.getOrDefault(eventID, -1.0);
+        // For now, we'll return a placeholder since ticket prices aren't stored in the database yet.
+        // You might want to add a ticket_price column to the income_tracking or contracts table.
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(
+                 "SELECT ticket_revenue_total / total_seats AS avg_ticket_price " +
+                 "FROM income_tracking i " +
+                 "JOIN seating_config s ON i.event_id = s.event_id " +
+                 "WHERE i.event_id = ?")) {
+
+            pstmt.setInt(1, eventID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getDouble("avg_ticket_price");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving ticket price: " + e.getMessage());
+        }
+        return -1.0; // Indicate not found
     }
 
     @Override
     public List<Seat> getSeatingAvailability(int eventID) {
-        return seatingAvailability.getOrDefault(eventID, new ArrayList<>());
+        List<Seat> seats = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(
+                 "SELECT total_seats, restricted_seats, wheelchair_seats " +
+                 "FROM seating_config WHERE event_id = ?")) {
+
+            pstmt.setInt(1, eventID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                int totalSeats = rs.getInt("total_seats");
+                String restrictedSeats = rs.getString("restricted_seats");
+                String wheelchairSeats = rs.getString("wheelchair_seats");
+
+                // Generate seats based on total_seats
+                for (int i = 1; i <= totalSeats; i++) {
+                    String location = "Seat " + i;
+                    boolean isRestricted = restrictedSeats != null && restrictedSeats.contains(String.valueOf(i));
+                    boolean isWheelchair = wheelchairSeats != null && wheelchairSeats.contains(String.valueOf(i));
+                    seats.add(new Seat(i, location, isWheelchair, isRestricted));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving seating availability: " + e.getMessage());
+        }
+        return seats;
     }
 
     @Override
     public List<EventSchedule> getEventSchedule() {
-        return eventSchedules;
+        List<EventSchedule> schedules = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(
+                 "SELECT c.event_id, c.start_date_time, r.name AS venue_name " +
+                 "FROM calendar c " +
+                 "JOIN rooms r ON c.room_id = r.room_id " +
+                 "ORDER BY c.start_date_time")) {
+
+            while (rs.next()) {
+                schedules.add(new EventSchedule(
+                    rs.getInt("event_id"),
+                    rs.getTimestamp("start_date_time").toLocalDateTime(),
+                    rs.getString("venue_name")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving event schedule: " + e.getMessage());
+        }
+        return schedules;
     }
 
     @Override
-    public List<Event> searchEventScheduleByDate(String date) {
-        List<Event> filteredEvents = new ArrayList<>();
-        for (Event event : events.values()) {
-            if (event.getEventDateTime().toLocalDate().toString().equals(date)) {
-                filteredEvents.add(event);
+    public List<Event> searchEventScheduleByDate(String startDate, String endDate) {
+        List<Event> events = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(
+                 "SELECT c.event_id, c.show_name, c.start_date_time, co.category " +
+                 "FROM calendar c " +
+                 "JOIN contracts co ON c.show_name = co.show_name " +
+                 "WHERE c.start_date_time BETWEEN ? AND ? " +
+                 "ORDER BY c.start_date_time")) {
+
+            pstmt.setString(1, startDate + " 00:00:00");
+            pstmt.setString(2, endDate + " 23:59:59");
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                events.add(new Event(
+                    rs.getInt("event_id"),
+                    rs.getString("show_name"),
+                    rs.getTimestamp("start_date_time").toLocalDateTime(),
+                    rs.getString("category")
+                ));
             }
+        } catch (SQLException e) {
+            System.err.println("Error searching event schedule by date: " + e.getMessage());
         }
-        return filteredEvents;
+        return events;
     }
 
     @Override
     public List<Event> searchEventScheduleByType(String eventType, int eventID) {
-        List<Event> filteredEvents = new ArrayList<>();
-        for (Event event : events.values()) {
-            if (event.getEventType().equalsIgnoreCase(eventType)) {
-                filteredEvents.add(event);
+        List<Event> events = new ArrayList<>();
+        String query = "SELECT c.event_id, c.show_name, c.start_date_time, co.category " +
+                      "FROM calendar c " +
+                      "JOIN contracts co ON c.show_name = co.show_name " +
+                      "WHERE co.category = ?" +
+                      (eventID != -1 ? " AND c.event_id = ?" : "") +
+                      " ORDER BY c.start_date_time";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, eventType);
+            if (eventID != -1) {
+                pstmt.setInt(2, eventID);
             }
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                events.add(new Event(
+                    rs.getInt("event_id"),
+                    rs.getString("show_name"),
+                    rs.getTimestamp("start_date_time").toLocalDateTime(),
+                    rs.getString("category")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error searching event schedule by type: " + e.getMessage());
         }
-        return filteredEvents;
+        return events;
     }
 
     @Override
     public void notifyEventChanges(int eventID) {
-        System.out.println("Notification: Event " + eventID + " has been rescheduled.");
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(
+                 "SELECT show_name, room_id, start_date_time, end_date_time, status " +
+                 "FROM calendar WHERE event_id = ?")) {
+
+            pstmt.setInt(1, eventID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                System.out.printf(
+                    "Event Change Notification - Event ID: %d, Show: %s, Room: %s, Start: %s, End: %s, Status: %s%n",
+                    eventID,
+                    rs.getString("show_name"),
+                    rs.getString("room_id"),
+                    rs.getTimestamp("start_date_time").toString(),
+                    rs.getTimestamp("end_date_time").toString(),
+                    rs.getString("status")
+                );
+            } else {
+                System.out.println("Event ID " + eventID + " not found.");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error notifying event changes: " + e.getMessage());
+        }
     }
 
     @Override
-    public int getVenueCapacity(int hallID) {
-        return venueCapacity.getOrDefault(hallID, 0);
+    public int getVenueCapacity(String hallID) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(
+                 "SELECT capacity FROM rooms WHERE room_id = ?")) {
+
+            pstmt.setString(1, hallID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("capacity");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving venue capacity: " + e.getMessage());
+        }
+        return 0; // Indicate not found
     }
 
     @Override
     public List<Show> getListOfAllShows() {
-        return showList;
+        List<Show> shows = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(
+                 "SELECT show_id, show_name, start_day, " +
+                 "TIMESTAMPDIFF(MINUTE, start_day, end_day) AS duration_minutes " +
+                 "FROM contracts ORDER BY show_name")) {
+
+            while (rs.next()) {
+                shows.add(new Show(
+                    rs.getInt("show_id"),
+                    rs.getString("show_name"),
+                    rs.getDate("start_day").toLocalDate().atStartOfDay(),
+                    rs.getInt("duration_minutes")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving list of shows: " + e.getMessage());
+        }
+        return shows;
     }
 
     @Override
-    public List<ShowTime> getShowTimeList() {
-        List<ShowTime> showTimes = new ArrayList<>();
-        for (Show show : showList) {
-            showTimes.add(new ShowTime(show.getShowStartTime()));
+    public List<Show> getShowTimeList() {
+        List<Show> shows = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(
+                 "SELECT c.event_id, c.show_name, c.start_date_time, " +
+                 "TIMESTAMPDIFF(MINUTE, c.start_date_time, c.end_date_time) AS duration_minutes " +
+                 "FROM calendar c " +
+                 "ORDER BY c.start_date_time")) {
+
+            while (rs.next()) {
+                shows.add(new Show(
+                    rs.getInt("event_id"),
+                    rs.getString("show_name"),
+                    rs.getTimestamp("start_date_time").toLocalDateTime(),
+                    rs.getInt("duration_minutes")
+                ));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving show time list: " + e.getMessage());
         }
-        return showTimes;
+        return shows;
     }
 
     @Override
     public LocalDateTime getShowStartTime(int eventID) {
-        return events.getOrDefault(eventID, new Event(0, "Unknown", LocalDateTime.now(), "Unknown")).getEventDateTime();
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(
+                 "SELECT start_date_time FROM calendar WHERE event_id = ?")) {
+
+            pstmt.setInt(1, eventID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getTimestamp("start_date_time").toLocalDateTime();
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving show start time: " + e.getMessage());
+        }
+        return null; // Indicate not found
     }
 
     @Override
     public int getShowDuration(int eventID) {
-        for (Show show : showList) {
-            if (show.getShowID() == eventID) {
-                return show.getDurationMinutes();
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(
+                 "SELECT start_date_time, end_date_time FROM calendar WHERE event_id = ?")) {
+
+            pstmt.setInt(1, eventID);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                LocalDateTime start = rs.getTimestamp("start_date_time").toLocalDateTime();
+                LocalDateTime end = rs.getTimestamp("end_date_time").toLocalDateTime();
+                Duration duration = Duration.between(start, end);
+                return (int) duration.toMinutes();
             }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving show duration: " + e.getMessage());
         }
-        return 0;
-    }
-
-    public static void main(String[] args) {
-        BoxOfficeSystem system = new BoxOfficeSystem();
-
-        System.out.println("Updated Ticket Price: " + system.getUpdatedTicketPrice(101));
-        System.out.println("Seating Availability: " + system.getSeatingAvailability(101));
-        System.out.println("Event Schedule: " + system.getEventSchedule());
-        System.out.println("Search by Date: " + system.searchEventScheduleByDate("2025-02-18"));
-        System.out.println("Search by Type: " + system.searchEventScheduleByType("Music", 101));
-
-        system.notifyEventChanges(101);
-
-        System.out.println("Venue Capacity: " + system.getVenueCapacity(1));
-        System.out.println("Show List: " + system.getListOfAllShows());
-        System.out.println("Show Time List: " + system.getShowTimeList());
-        System.out.println("Show Start Time: " + system.getShowStartTime(101));
-        System.out.println("Show Duration: " + system.getShowDuration(101));
+        return -1; // Indicate not found
     }
 }
