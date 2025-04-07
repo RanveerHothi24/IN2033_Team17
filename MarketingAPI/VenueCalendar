@@ -1,0 +1,33 @@
+import java.time.LocalDateTime;
+import java.util.List;
+
+public interface VenueCalendar {
+
+    /**
+     * Retrieves the schedule of all shows.
+     * @return A list of scheduled events.
+     */
+    List<EventSchedule> getShowSchedules();
+
+    /**
+     * Retrieves setup details for a specific event.
+     * @param eventId The ID of the event.
+     * @return A string describing the setup details.
+     */
+    String getSetupDetails(int eventId);
+
+    /**
+     * Finds available time slots in a specific room within a date range.
+     * @param roomId The ID of the room (e.g., 'MH' for Main Hall).
+     * @param startDate The start date of the range (format: YYYY-MM-DD).
+     * @param endDate The end date of the range (format: YYYY-MM-DD).
+     * @return A list of available time slots.
+     */
+    List<TimeSlot> findAvailableGaps(String roomId, String startDate, String endDate);
+
+    /**
+     * Retrieves periods with booking restrictions or deadlines.
+     * @return A list of events with restricted periods.
+     */
+    List<Event> getRestrictedPeriods();
+}
