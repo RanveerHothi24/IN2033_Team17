@@ -7,61 +7,8 @@ import java.util.List;
 public class BoxOfficeOperationsImpl implements BoxOfficeOperations {
 
     private static final String DB_URL = "jdbc:mysql://localhost:3306/in2033t17";
-    private static final String DB_USER = "your_username";
-    private static final String DB_PASSWORD = "your_password";
-
-    @Override
-    public double getUpdatedTicketPrice(int eventID) {
-        // For now, we'll return a placeholder since ticket prices aren't stored in the database yet.
-        // You might want to add a ticket_price column to the income_tracking or contracts table.
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-             PreparedStatement pstmt = conn.prepareStatement(
-                 "SELECT ticket_revenue_total / total_seats AS avg_ticket_price " +
-                 "FROM income_tracking i " +
-                 "JOIN seating_config s ON i.event_id = s.event_id " +
-                 "WHERE i.event_id = ?")) {
-
-            pstmt.setInt(1, eventID);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                return rs.getDouble("avg_ticket_price");
-            }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving ticket price: " + e.getMessage());
-        }
-        return -1.0; // Indicate not found
-    }
-
-    @Override
-    public List<Seat> getSeatingAvailability(int eventID) {
-        List<Seat> seats = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-             PreparedStatement pstmt = conn.prepareStatement(
-                 "SELECT total_seats, restricted_seats, wheelchair_seats " +
-                 "FROM seating_config WHERE event_id = ?")) {
-
-            pstmt.setInt(1, eventID);
-            ResultSet rs = pstmt.executeQuery();
-
-            if (rs.next()) {
-                int totalSeats = rs.getInt("total_seats");
-                String restrictedSeats = rs.getString("restricted_seats");
-                String wheelchairSeats = rs.getString("wheelchair_seats");
-
-                // Generate seats based on total_seats
-                for (int i = 1; i <= totalSeats; i++) {
-                    String location = "Seat " + i;
-                    boolean isRestricted = restrictedSeats != null && restrictedSeats.contains(String.valueOf(i));
-                    boolean isWheelchair = wheelchairSeats != null && wheelchairSeats.contains(String.valueOf(i));
-                    seats.add(new Seat(i, location, isWheelchair, isRestricted));
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving seating availability: " + e.getMessage());
-        }
-        return seats;
-    }
+    private static final String DB_USER = "in2033t17_d";
+    private static final String DB_PASSWORD = "qKvalvobOa0";
 
     @Override
     public List<EventSchedule> getEventSchedule() {
@@ -192,7 +139,7 @@ public class BoxOfficeOperationsImpl implements BoxOfficeOperations {
         } catch (SQLException e) {
             System.err.println("Error retrieving venue capacity: " + e.getMessage());
         }
-        return 0; // Indicate not found
+        return 0;
     }
 
     @Override
@@ -280,6 +227,6 @@ public class BoxOfficeOperationsImpl implements BoxOfficeOperations {
         } catch (SQLException e) {
             System.err.println("Error retrieving show duration: " + e.getMessage());
         }
-        return -1; // Indicate not found
+        return -1;
     }
 }
