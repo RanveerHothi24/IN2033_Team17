@@ -1,61 +1,84 @@
-BoxOffice API - README
+# Box Office API - README
 
-Overview:
-This API allows the Box Office Team to interact with the system and retrieve data related to event schedules, seating availability, ticket prices, and show details. The interface BoxOfficeOperations.java defines the required methods, and the supporting classes (Event, Seat, Show, etc.) store structured data.
+## Overview
+This API enables the Box Office Team at Lancaster’s Music Hall to interact with the Operations system and retrieve data related to event schedules, seating availability, ticket prices, venue capacities, and show details. The interface `BoxOfficeOperations.java` defines the required methods, and the supporting classes (`Event`, `Seat`, `EventSchedule`, `Show`) store structured data. The implementation `BoxOfficeOperationsImpl.java` connects to the MySQL database to provide real-time data access.
 
-Files Included:
-BoxOfficeOperations.java - Interface defining all required methods
-Event.java - Stores event details
-Seat.java - Stores seat details
-EventSchedule.java - Stores event schedules
-Show.java - Stores show details
-ShowTime.java - Stores show times
-BoxOfficeSystem.java - Sample implementation (optional)
-README.md - This document
+## Files Included
+- `BoxOfficeOperations.java` - Interface defining all required methods.
+- `Event.java` - Stores event details (ID, name, date, type).
+- `Seat.java` - Stores seat details (ID, location, accessibility, restricted view).
+- `EventSchedule.java` - Stores event schedules (ID, date, venue).
+- `Show.java` - Stores show details (ID, name, start time, duration).
+- `BoxOfficeOperationsImpl.java` - Database-driven implementation of the interface.
+- `README.md` - This document.
 
+## How to Use the Interface
+1. **Implement `BoxOfficeOperations.java`**:
+   - Use the provided `BoxOfficeOperationsImpl.java` as the default implementation, which connects to the MySQL database.
+   - Alternatively, create your own implementation of `BoxOfficeOperations.java` if you need a custom data source.
+2. **Use the Supporting Classes**:
+   - Use `Event`, `Seat`, `EventSchedule`, and `Show` to handle structured data returned by the API methods.
 
-How to Use the Interface:
-Implement BoxOfficeOperations.java in your system.
-Use the provided data classes (Event.java, Seat.java, etc.).
-Refer to BoxOfficeSystem.java for an example implementation.
+## Interface Methods
 
+### Event & Show Management
+- **`getEventSchedule()`**
+  - **Description**: Retrieves a list of all scheduled events, including dates, times, and venues.
+  - **Returns**: `List<EventSchedule>` - A list of event schedules.
+- **`searchEventScheduleByDate(String startDate, String endDate)`**
+  - **Description**: Searches for events within a specific date range.
+  - **Parameters**:
+    - `startDate`: The start date (format: YYYY-MM-DD).
+    - `endDate`: The end date (format: YYYY-MM-DD).
+  - **Returns**: `List<Event>` - A list of events within the date range.
+- **`searchEventScheduleByType(String eventType, int eventID)`**
+  - **Description**: Searches for events of a specific type (e.g., "LIVE SHOW", "COMEDY").
+  - **Parameters**:
+    - `eventType`: The type of event.
+    - `eventID`: Optional event ID to filter a specific event (-1 to ignore).
+  - **Returns**: `List<Event>` - A list of events matching the event type.
+- **`notifyEventChanges(int eventID)`**
+  - **Description**: Notifies the Box Office Team about event updates (e.g., reschedules or cancellations).
+  - **Parameters**:
+    - `eventID`: The ID of the event.
+  - **Returns**: None (prints a notification message to the console).
 
-Interface Methods -
+### Seating & Venue Management
+- **`getSeatingAvailability(int eventID)`**
+  - **Description**: Retrieves available seats for an event, including restricted and wheelchair-accessible seats.
+  - **Parameters**:
+    - `eventID`: The ID of the event.
+  - **Returns**: `List<Seat>` - A list of available seats.
+- **`getVenueCapacity(String hallID)`**
+  - **Description**: Retrieves the seating capacity of a venue.
+  - **Parameters**:
+    - `hallID`: The ID of the hall (e.g., "MH" for Main Hall).
+  - **Returns**: `int` - The capacity of the venue, or 0 if not found.
 
-Ticket Sales & Pricing:
-getUpdatedTicketPrice(int eventID) - Retrieves the latest ticket price for an event.
+### Show Information
+- **`getListOfAllShows()`**
+  - **Description**: Retrieves all scheduled shows.
+  - **Returns**: `List<Show>` - A list of all shows.
+- **`getShowTimeList()`**
+  - **Description**: Retrieves a list of all shows with their start times and durations.
+  - **Returns**: `List<Show>` - A list of shows including their start times and durations.
+- **`getShowStartTime(int eventID)`**
+  - **Description**: Retrieves a show’s start time.
+  - **Parameters**:
+    - `eventID`: The ID of the event.
+  - **Returns**: `LocalDateTime` - The start time of the show, or null if not found.
+- **`getShowDuration(int eventID)`**
+  - **Description**: Retrieves a show’s duration in minutes.
+  - **Parameters**:
+    - `eventID`: The ID of the event.
+  - **Returns**: `int` - The duration in minutes, or -1 if not found.
 
-Event & Show Management:
-getEventSchedule() - Retrieves a list of all scheduled events.
-searchEventScheduleByDate(String date) - Searches for events on a specific date.
-searchEventScheduleByType(String eventType, int eventID) - Searches for events of a specific type.
-notifyEventChanges(int eventID) - Notifies about event updates.
-
-Seating & Venue Management:
-getSeatingAvailability(int eventID) - Retrieves available seats, including restricted and wheelchair-accessible seats.
-getVenueCapacity(int hallID) - Retrieves the venue's seating capacity.
-
-Show Information:
-getListOfAllShows() - Retrieves all scheduled shows.
-getShowTimeList() - Retrieves show times.
-getShowStartTime(int eventID) - Retrieves a show's start time.
-getShowDuration(int eventID) - Retrieves a show's duration in minutes.
-
-
-Supporting Data Classes:
-Event.java - Represents an event with ID, name, date, and type.
-Seat.java - Represents seat details, including accessibility and restricted view.
-EventSchedule.java - Stores event scheduling details, including date and venue.
-Show.java - Stores show details, including name, start time, and duration.
-ShowTime.java - Represents the start time of a show.
-
-Contact Information:
-Operations Team Lead: Ranveer Hothi
-Email: Ranveer.Hothi@city.ac.uk
-
-Final Instructions
-Implement BoxOfficeOperations.java.
-Use the supporting classes.
-Refer to BoxOfficeSystem.java for examples.
-Test the API methods before full integration.
-If you have any questions, contact the Operations Team.
+## Supporting Data Classes
+- **`Event.java`**
+  - Represents an event with `eventID`, `eventName`, `eventDateTime`, and `eventType`.
+- **`Seat.java`**
+  - Represents seat details with `seatID`, `location`, `isWheelchairAccessible`, and `isRestrictedView`.
+- **`EventSchedule.java`**
+  - Represents event scheduling details with `eventID`, `eventDateTime`, and `venueName`.
+- **`Show.java`**
+  - Represents show details with `showID`, `showName`, `showStartTime`, and `durationMinutes`.
