@@ -1,17 +1,21 @@
 package com.example.codeblooded;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.*;
 import javafx.stage.Stage;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.image.ImageView;
 import java.util.*;
-
-import javafx.scene.control.TextField;
 
 public class CalendarGrid extends Application {
 
@@ -37,35 +41,45 @@ public class CalendarGrid extends Application {
 
     /** Creates the login scene with username and password fields */
     private Scene createLoginScene(Stage primaryStage) {
-        // UI elements
-        Label usernameLabel = new Label("Username:");
-        usernameLabel.setStyle("-fx-text-fill: white;");
-        TextField usernameField = new TextField();
-        Label passwordLabel = new Label("Password:");
-        passwordLabel.setStyle("-fx-text-fill: white;");
-        PasswordField passwordField = new PasswordField();
-        Button loginButton = new Button("Login");
-        Label errorLabel = new Label();
-        errorLabel.setStyle("-fx-text-fill: red;");
+        // Create the background with a static soft gradient
+        Rectangle background = new Rectangle(1280, 720);
+        LinearGradient gradient = new LinearGradient(
+                0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
+                new Stop(0, Color.web("#4CAF50")),
+                new Stop(1, Color.web("#2196F3"))
+        );
+        background.setFill(gradient);
 
-        // Layout for login form
-        GridPane loginForm = new GridPane();
-        loginForm.setHgap(10);
-        loginForm.setVgap(10);
-        loginForm.add(usernameLabel, 0, 0);
-        loginForm.add(usernameField, 1, 0);
-        loginForm.add(passwordLabel, 0, 1);
-        loginForm.add(passwordField, 1, 1);
-        loginForm.add(loginButton, 1, 2);
-        loginForm.add(errorLabel, 0, 3, 2, 1);  // Error spans 2 columns
-
-        // Center everything in a VBox without the image
-        VBox loginBox = new VBox(20, loginForm);
+        // Create the login box
+        VBox loginBox = new VBox(20);
         loginBox.setAlignment(Pos.CENTER);
         loginBox.setPadding(new Insets(20));
-        loginBox.setStyle("-fx-background-color: #333333;");  // Dark background
+        loginBox.setMaxWidth(300);
 
-        // Login button action
+        // Space for an image (e.g., logo) at the top
+        ImageView logo = new ImageView(new javafx.scene.image.Image(getClass().getResourceAsStream("/com/example/codeblooded/lmh_logo.png")));// Replace with your image path
+        logo.setFitWidth(125);
+        logo.setFitHeight(125);
+        logo.setPreserveRatio(true);
+
+        // UI elements for login
+        Label usernameLabel = new Label("Username:");
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Enter username");
+
+        Label passwordLabel = new Label("Password:");
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Enter password");
+
+        Button loginButton = new Button("Login");
+
+        Label errorLabel = new Label();
+
+        loginBox.getChildren().addAll(logo, usernameLabel, usernameField, passwordLabel, passwordField, loginButton, errorLabel);
+
+        StackPane root = new StackPane();
+        root.getChildren().addAll(background, loginBox);
+
         loginButton.setOnAction(e -> {
             String username = usernameField.getText();
             String password = passwordField.getText();
@@ -78,7 +92,17 @@ public class CalendarGrid extends Application {
             }
         });
 
-        return new Scene(loginBox, 400, 300);  // Compact size for login screen
+        loginBox.getStyleClass().add("login-box");
+        usernameLabel.getStyleClass().add("login-label");
+        passwordLabel.getStyleClass().add("login-label");
+        usernameField.getStyleClass().add("login-field");
+        passwordField.getStyleClass().add("login-field");
+        loginButton.getStyleClass().add("login-button");
+        errorLabel.getStyleClass().add("login-error");
+
+        Scene scene = new Scene(root, 1280, 720);
+        scene.getStylesheets().add(getClass().getResource("/com/example/codeblooded/styles.css").toExternalForm());
+        return scene;
     }
 
     /** Creates the calendar scene (moved from start method) */
@@ -256,14 +280,17 @@ public class CalendarGrid extends Application {
                         dayCells[row][col].getStyleClass().add("future");
                     }
 
-                    // Apply filter highlighting
+                    // Apply filter highlighting only if a filter is applied
                     List<Booking> bookings = getBookingsForDate(date);
+                    boolean isFilterApplied = !selectedRooms.isEmpty() || selectedCompany != null;
                     boolean matchesFilter = false;
-                    for (Booking booking : bookings) {
-                        if ((selectedRooms.isEmpty() || selectedRooms.contains(booking.getRoom())) &&
-                                (selectedCompany == null || selectedCompany.equals(booking.getCompany()))) {
-                            matchesFilter = true;
-                            break;
+                    if (isFilterApplied) {
+                        for (Booking booking : bookings) {
+                            if ((selectedRooms.isEmpty() || selectedRooms.contains(booking.getRoom())) &&
+                                    (selectedCompany == null || selectedCompany.equals(booking.getCompany()))) {
+                                matchesFilter = true;
+                                break;
+                            }
                         }
                     }
                     if (matchesFilter) {

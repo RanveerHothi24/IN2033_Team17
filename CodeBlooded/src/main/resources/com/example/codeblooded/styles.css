@@ -187,3 +187,35 @@
 .button:hover {
     -fx-background-color: #777777;
 }
+/* Login box styling */
+.login-box {
+    -fx-background-color: #122023; /* White background for the box */
+    -fx-background-radius: 10;     /* Rounded corners */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 10, 0, 0, 0); /* Subtle shadow */
+}
+
+/* Labels (Username and Password) */
+.login-label {
+    -fx-text-fill: #ffffff; /* Dark gray text */
+}
+
+/* Text fields (Username and Password) */
+.login-field {
+    -fx-background-color: #f0f0f0; /* Light gray background */
+    -fx-border-color: #cccccc;     /* Light gray border */
+    -fx-border-radius: 5;          /* Rounded corners */
+}
+
+/* Login button */
+.login-button {
+    -fx-background-color: #4CAF50; /* Green (change this as needed) */
+    -fx-text-fill: white;          /* White text */
+    -fx-font-size: 14px;           /* Slightly larger text */
+    -fx-padding: 10 20;            /* Vertical and horizontal padding */
+    -fx-background-radius: 5;      /* Rounded corners */
+}
+
+/* Error message */
+.login-error {
+    -fx-text-fill: red; /* Red text for errors */
+}
